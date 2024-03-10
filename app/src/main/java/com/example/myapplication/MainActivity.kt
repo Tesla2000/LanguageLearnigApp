@@ -10,16 +10,24 @@ import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import java.util.Locale
+import java.util.logging.Logger
+
 
 class MainActivity : AppCompatActivity() {
     private val RQ_SPEECH_REC = 102
     private lateinit var tts: TextToSpeech
-    private lateinit var userAnswer: String
+    private var userAnswer: String = ""
+    private val Log = Logger.getLogger(MainActivity::class.java.name)
+    private var askingSpeechInput = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Log.warning("Hello World")
         setContentView(R.layout.activity_main)
-        var questionAnswerPairs: HashMap<String, String> = hashMapOf("mother" to "die mutter")
+        var questionAnswerPairs: HashMap<String, String> = hashMapOf(
+            "mother" to "die mutter",
+//            "father" to "der vater",
+            )
 
         for ((question, answer) in questionAnswerPairs) {
             tts = TextToSpeech(applicationContext) {
@@ -34,7 +42,12 @@ class MainActivity : AppCompatActivity() {
 
             tts.setOnUtteranceCompletedListener { utteranceId ->
                 if (utteranceId == "utteranceId") {
-                    askSpeechInput()
+                    do {
+                        if (!askingSpeechInput) {
+                            askingSpeechInput = true
+                            askSpeechInput()
+                        }
+                    } while (userAnswer.lowercase() != answer.lowercase())
                 }
             }
         }
@@ -59,8 +72,10 @@ class MainActivity : AppCompatActivity() {
         super.onActivityResult(requestCode, resultCode, data)
 
         if (requestCode == RQ_SPEECH_REC && resultCode == Activity.RESULT_OK) {
-            val result = data?.getStringArrayExtra(RecognizerIntent.EXTRA_RESULTS)
+            val result = data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+
             userAnswer = result?.get(0).toString()
+            askingSpeechInput = false
         }
     }
 }
