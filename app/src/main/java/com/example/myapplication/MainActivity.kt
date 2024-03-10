@@ -19,7 +19,7 @@ class MainActivity : AppCompatActivity() {
     private var userAnswer: String = ""
     private var askingSpeechInput = false
     private val repetitionRate = 0.5f
-    private val bufferSize = 1
+    private val bufferSize = 5
     private val unansweredQuestionAnswerPairs: ArrayList<ArrayList<String>> = arrayListOf(
         arrayListOf("mother", "die mutter"),
         arrayListOf("father", "der vater"),
