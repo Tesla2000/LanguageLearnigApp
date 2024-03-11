@@ -8,21 +8,29 @@ import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
 import android.util.Log
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+import okhttp3.Call
+import okhttp3.Callback
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody
+import okhttp3.Response
+import java.io.IOException
 import java.util.Locale
 import kotlin.random.Random
 
 
-class MainActivity : WordsActivity() {
-	val url = "https://api.example.com/post"
+class MainActivity : AppCompatActivity() {
     private val RQ_SPEECH_REC = 102
     private lateinit var tts: TextToSpeech
     private var userAnswer: String = ""
     private var askingSpeechInput = false
     private val repetitionRate = 0.5f
-    private val bufferSize = 2
 	private val speechRate = 0.5f
-    private val unansweredQuestionAnswerPairsBuffer: ArrayList<ArrayList<String>> = ArrayList(unansweredQuestionAnswerPairs.shuffled().take(bufferSize))
-    private val answeredQuestionAnswerPairs: ArrayList<ArrayList<String>> = arrayListOf()
+    private val words = Words()
+    private val login = "Login"
+    private val url = "https://tesla2000.pythonanywhere.com/"
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         testQuestionAnswer()
@@ -55,8 +63,8 @@ class MainActivity : WordsActivity() {
     }
 
     private fun testQuestionAnswer() {
-        val question = unansweredQuestionAnswerPairsBuffer[0][0]
-        val answer = unansweredQuestionAnswerPairsBuffer[0][1]
+        val question = words.unansweredQuestionAnswerPairsBuffer[0][0]
+        val answer = words.unansweredQuestionAnswerPairsBuffer[0][1]
         tts = TextToSpeech(applicationContext) {
             if (it == TextToSpeech.SUCCESS) {
                 tts.language = Locale.US
@@ -76,40 +84,73 @@ class MainActivity : WordsActivity() {
             } while (userAnswer == "")
             Log.i("USER", userAnswer)
             Log.i("USER", answer)
-            if (userAnswer.lowercase().replace(Regex("[.,?!]"), "") == answer.lowercase().replace(Regex("[.,?!]"), "")) {
-                Log.i("USER", "Answer correct")
-                val removedElement = unansweredQuestionAnswerPairsBuffer.removeFirst()
-                if (!answeredQuestionAnswerPairs.contains(removedElement)) {
-                    Log.i("USER", "Adding $removedElement to answered")
-                    answeredQuestionAnswerPairs.add(removedElement)
-                } else {
-                    Log.i("USER", "$removedElement already in answered $answeredQuestionAnswerPairs")
-                }
-                if (unansweredQuestionAnswerPairs.isEmpty() || Random.nextFloat() < repetitionRate) {
-                    val randomElement = answeredQuestionAnswerPairs.random()
-                    Log.i("USER", "Adding $randomElement from answeredQuestionAnswerPairs to buffer")
-                    unansweredQuestionAnswerPairsBuffer.add(randomElement)
-                } else {
-                    val randomElement = unansweredQuestionAnswerPairs.random()
-                    Log.i("USER", "Adding $randomElement from unansweredQuestionAnswerPairs to buffer")
-                    unansweredQuestionAnswerPairsBuffer.add(randomElement)
-                    unansweredQuestionAnswerPairs.remove(randomElement)
-                }
-				unansweredQuestionAnswerPairsBuffer.add(removedElement)
-				userAnswer = ""
-				askingSpeechInput = false
-				testQuestionAnswer()
-            } else {
-				sayCorrectAnswer()
-				unansweredQuestionAnswerPairsBuffer.add(unansweredQuestionAnswerPairsBuffer.removeFirst())
-				userAnswer = ""
-				askingSpeechInput = false
-			}
+            postAnswer(question, answer, userAnswer)
         }
     }
 
+    private fun afterPost(answer: String) {
+        if (userAnswer.lowercase().replace(Regex("[.,?!]"), "") == answer.lowercase().replace(Regex("[.,?!]"), "")) {
+            Log.i("USER", "Answer correct")
+            val removedElement = words.unansweredQuestionAnswerPairsBuffer.removeFirst()
+            if (!words.answeredQuestionAnswerPairs.contains(removedElement)) {
+                Log.i("USER", "Adding $removedElement to answered")
+                words.answeredQuestionAnswerPairs.add(removedElement)
+            } else {
+                Log.i("USER", "$removedElement already in answered $words.answeredQuestionAnswerPairs")
+            }
+            if (words.unansweredQuestionAnswerPairs.isEmpty() || Random.nextFloat() < repetitionRate) {
+                val randomElement = words.answeredQuestionAnswerPairs.random()
+                Log.i("USER", "Adding $randomElement from answeredQuestionAnswerPairs to buffer")
+                words.unansweredQuestionAnswerPairsBuffer.add(randomElement)
+            } else {
+                val randomElement = words.unansweredQuestionAnswerPairs.random()
+                Log.i("USER", "Adding $randomElement from unansweredQuestionAnswerPairs to buffer")
+                words.unansweredQuestionAnswerPairsBuffer.add(randomElement)
+                words.unansweredQuestionAnswerPairs.remove(randomElement)
+            }
+            words.unansweredQuestionAnswerPairsBuffer.add(removedElement)
+            userAnswer = ""
+            askingSpeechInput = false
+            confirmAnswer()
+        } else {
+            sayCorrectAnswer()
+            words.unansweredQuestionAnswerPairsBuffer.add(words.unansweredQuestionAnswerPairsBuffer.removeFirst())
+            userAnswer = ""
+            askingSpeechInput = false
+        }
+    }
+
+    private fun postAnswer(question: String, answer: String, userAnswer: String) {
+        Log.i("API", "POSTING\nquestion $question\nanswer $userAnswer")
+
+        val json = "$login;$question;$userAnswer".trimIndent()
+
+        val requestBody = RequestBody.create("application/json".toMediaTypeOrNull(), json)
+
+        val request = Request.Builder()
+            .url(url)
+            .post(requestBody)
+            .build()
+
+        val client = OkHttpClient()
+
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                Log.i("API", "Failed to POST ${e.message}")
+                afterPost(answer)
+
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                Log.i("API", "Succeeded to POST ${response.body?.string()}")
+                afterPost(answer)
+            }
+        }
+        )
+    }
+
 	private fun sayCorrectAnswer() {
-		val answer = unansweredQuestionAnswerPairsBuffer[0][1]
+		val answer = words.unansweredQuestionAnswerPairsBuffer[0][1]
 		tts = TextToSpeech(applicationContext) {
 			if (it == TextToSpeech.SUCCESS) {
 				tts.language = Locale.GERMAN
@@ -124,7 +165,18 @@ class MainActivity : WordsActivity() {
 		}
 	}
 
-	private fun postData() {
-
+	private fun confirmAnswer() {
+		tts = TextToSpeech(applicationContext) {
+			if (it == TextToSpeech.SUCCESS) {
+				tts.language = Locale.US
+				tts.setSpeechRate(speechRate)
+				val params = HashMap<String, String>()
+				params[TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID] = "utteranceId"
+				tts.speak("You are right!", TextToSpeech.QUEUE_ADD, params)
+			}
+		}
+		tts.setOnUtteranceCompletedListener { utteranceId ->
+			testQuestionAnswer()
+		}
 	}
 }

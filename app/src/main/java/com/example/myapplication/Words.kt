@@ -1,9 +1,9 @@
 package com.example.myapplication
 
-import androidx.appcompat.app.AppCompatActivity
 
-abstract class WordsActivity: AppCompatActivity() {
-    protected val unansweredQuestionAnswerPairs: ArrayList<ArrayList<String>> = arrayListOf(
+class Words {
+    val bufferSize = 2
+    val unansweredQuestionAnswerPairs: ArrayList<ArrayList<String>> = arrayListOf(
         arrayListOf("Tell me about your day.", "Erzähl mir von deinem Tag."),
         arrayListOf("All dogs bark.", "Alle Hunde bellen."),
         arrayListOf("She is also coming.", "Sie kommt auch."),
@@ -35,7 +35,10 @@ abstract class WordsActivity: AppCompatActivity() {
         arrayListOf("That's his car.", "Das ist sein Auto."),
         arrayListOf("How are you?", "Wie geht es dir?"),
         arrayListOf("I am hungry.", "Ich habe Hunger."),
-        arrayListOf("If it rains, bring an umbrella.", "Wenn es regnet, bring einen Regenschirm mit."),
+        arrayListOf(
+            "If it rains, bring an umbrella.",
+            "Wenn es regnet, bring einen Regenschirm mit."
+        ),
         arrayListOf("I'm in a hurry.", "Ich habe es eilig."),
         arrayListOf("He went into the house.", "Er ging ins Haus."),
         arrayListOf("It's cold.", "Es ist kalt."),
@@ -66,7 +69,10 @@ abstract class WordsActivity: AppCompatActivity() {
         arrayListOf("What did you say?", "Was hast du gesagt?"),
         arrayListOf("I see you.", "Ich sehe dich."),
         arrayListOf("She is here.", "Sie ist hier."),
-        arrayListOf("It's raining, so bring an umbrella.", "Es regnet, also bring einen Regenschirm mit."),
+        arrayListOf(
+            "It's raining, so bring an umbrella.",
+            "Es regnet, also bring einen Regenschirm mit."
+        ),
         arrayListOf("I want some candy.", "Ich möchte etwas Süßes."),
         arrayListOf("Take this.", "Nimm das."),
         arrayListOf("Tell me a story.", "Erzähl mir eine Geschichte."),
@@ -104,4 +110,6 @@ abstract class WordsActivity: AppCompatActivity() {
         arrayListOf("It's you.", "Es bist du."),
         arrayListOf("Is this your book?", "Ist das dein Buch?"),
     )
+    val unansweredQuestionAnswerPairsBuffer: ArrayList<ArrayList<String>> = ArrayList(unansweredQuestionAnswerPairs.shuffled().take(bufferSize))
+    val answeredQuestionAnswerPairs: ArrayList<ArrayList<String>> = arrayListOf()
 }
