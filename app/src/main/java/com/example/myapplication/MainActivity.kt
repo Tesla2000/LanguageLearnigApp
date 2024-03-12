@@ -26,14 +26,15 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tts: TextToSpeech
     private var userAnswer: String = ""
     private var askingSpeechInput = false
-    private val repetitionRate = 0.5f
-	private val speechRate = 0.5f
-    private val words = Words()
-    private val login = "Login"
-    private val url = "https://tesla2000.pythonanywhere.com/"
+    private val speechRate = 0.5f
+    private val buffer: ArrayList<List<String>> = arrayListOf()
+    private val login = "login"
+    private val bufferSize: Int = 2
+//    private val url = "http://192.168.42.109:5000/"
+        private val url = "https://tesla2000.pythonanywhere.com/"
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        testQuestionAnswer()
+        getInitialQuestions()
     }
 
     private fun askSpeechInput() {
@@ -51,6 +52,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
@@ -63,8 +65,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun testQuestionAnswer() {
-        val question = words.unansweredQuestionAnswerPairsBuffer[0][0]
-        val answer = words.unansweredQuestionAnswerPairsBuffer[0][1]
+        val question = buffer[0][0]
+        val answer = buffer[0][1]
         tts = TextToSpeech(applicationContext) {
             if (it == TextToSpeech.SUCCESS) {
                 tts.language = Locale.US
@@ -75,7 +77,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        tts.setOnUtteranceCompletedListener { utteranceId ->
+        tts.setOnUtteranceCompletedListener {
             do {
                 if (!askingSpeechInput) {
                     askingSpeechInput = true
@@ -85,38 +87,20 @@ class MainActivity : AppCompatActivity() {
             Log.i("USER", userAnswer)
             Log.i("USER", answer)
             postAnswer(question, answer, userAnswer)
+            userAnswer = ""
         }
     }
 
-    private fun afterPost(answer: String) {
-        if (userAnswer.lowercase().replace(Regex("[.,?!]"), "") == answer.lowercase().replace(Regex("[.,?!]"), "")) {
-            Log.i("USER", "Answer correct")
-            val removedElement = words.unansweredQuestionAnswerPairsBuffer.removeFirst()
-            if (!words.answeredQuestionAnswerPairs.contains(removedElement)) {
-                Log.i("USER", "Adding $removedElement to answered")
-                words.answeredQuestionAnswerPairs.add(removedElement)
-            } else {
-                Log.i("USER", "$removedElement already in answered $words.answeredQuestionAnswerPairs")
-            }
-            if (words.unansweredQuestionAnswerPairs.isEmpty() || Random.nextFloat() < repetitionRate) {
-                val randomElement = words.answeredQuestionAnswerPairs.random()
-                Log.i("USER", "Adding $randomElement from answeredQuestionAnswerPairs to buffer")
-                words.unansweredQuestionAnswerPairsBuffer.add(randomElement)
-            } else {
-                val randomElement = words.unansweredQuestionAnswerPairs.random()
-                Log.i("USER", "Adding $randomElement from unansweredQuestionAnswerPairs to buffer")
-                words.unansweredQuestionAnswerPairsBuffer.add(randomElement)
-                words.unansweredQuestionAnswerPairs.remove(randomElement)
-            }
-            words.unansweredQuestionAnswerPairsBuffer.add(removedElement)
+    private fun afterPost(responseString: String) {
+        if (responseString.isEmpty()) {
             userAnswer = ""
-            askingSpeechInput = false
-            confirmAnswer()
+            val questionAnswerPair = buffer.removeFirst()
+            buffer.add(questionAnswerPair)
+            sayCorrectAnswer(questionAnswerPair[1])
         } else {
-            sayCorrectAnswer()
-            words.unansweredQuestionAnswerPairsBuffer.add(words.unansweredQuestionAnswerPairsBuffer.removeFirst())
-            userAnswer = ""
-            askingSpeechInput = false
+            buffer.removeFirst()
+            buffer.add(responseString.split(';'))
+            confirmAnswer()
         }
     }
 
@@ -137,46 +121,77 @@ class MainActivity : AppCompatActivity() {
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
                 Log.i("API", "Failed to POST ${e.message}")
-                afterPost(answer)
-
+                postAnswer(question, answer, userAnswer)
             }
 
             override fun onResponse(call: Call, response: Response) {
-                Log.i("API", "Succeeded to POST ${response.body?.string()}")
-                afterPost(answer)
+                val responseString = response.body?.string()
+                Log.i("API", "Succeeded to POST $responseString")
+                afterPost(responseString!!)
             }
         }
         )
     }
 
-	private fun sayCorrectAnswer() {
-		val answer = words.unansweredQuestionAnswerPairsBuffer[0][1]
-		tts = TextToSpeech(applicationContext) {
-			if (it == TextToSpeech.SUCCESS) {
-				tts.language = Locale.GERMAN
-				tts.setSpeechRate(speechRate)
-				val params = HashMap<String, String>()
-				params[TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID] = "utteranceId"
-				tts.speak(answer, TextToSpeech.QUEUE_ADD, params)
-			}
-		}
-		tts.setOnUtteranceCompletedListener { utteranceId ->
-			testQuestionAnswer()
-		}
-	}
+    private fun getInitialQuestions() {
+        Log.i("API", "GETTING initial question")
 
-	private fun confirmAnswer() {
-		tts = TextToSpeech(applicationContext) {
-			if (it == TextToSpeech.SUCCESS) {
-				tts.language = Locale.US
-				tts.setSpeechRate(speechRate)
-				val params = HashMap<String, String>()
-				params[TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID] = "utteranceId"
-				tts.speak("You are right!", TextToSpeech.QUEUE_ADD, params)
-			}
-		}
-		tts.setOnUtteranceCompletedListener { utteranceId ->
-			testQuestionAnswer()
-		}
-	}
+
+        val request = Request.Builder()
+            .url("$url$login")
+            .get()
+            .build()
+
+        val client = OkHttpClient()
+
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                Log.i("API", "Failed to POST ${e.message}")
+                getInitialQuestions()
+
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                val stringResponse = response.body?.string()
+                Log.i("API", "Succeeded to GET $stringResponse")
+                buffer.add(stringResponse!!.split(';'))
+                if (buffer.size < bufferSize) {
+                    getInitialQuestions()
+                } else {
+                    testQuestionAnswer()
+                }
+            }
+        }
+        )
+    }
+
+    private fun sayCorrectAnswer(answer: String) {
+        tts = TextToSpeech(applicationContext) {
+            if (it == TextToSpeech.SUCCESS) {
+                tts.language = Locale.GERMAN
+                tts.setSpeechRate(speechRate)
+                val params = HashMap<String, String>()
+                params[TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID] = "utteranceId"
+                tts.speak(answer, TextToSpeech.QUEUE_ADD, params)
+            }
+        }
+        tts.setOnUtteranceCompletedListener { utteranceId ->
+            testQuestionAnswer()
+        }
+    }
+
+    private fun confirmAnswer() {
+        tts = TextToSpeech(applicationContext) {
+            if (it == TextToSpeech.SUCCESS) {
+                tts.language = Locale.US
+                tts.setSpeechRate(speechRate)
+                val params = HashMap<String, String>()
+                params[TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID] = "utteranceId"
+                tts.speak("You are right!", TextToSpeech.QUEUE_ADD, params)
+            }
+        }
+        tts.setOnUtteranceCompletedListener { utteranceId ->
+            testQuestionAnswer()
+        }
+    }
 }
