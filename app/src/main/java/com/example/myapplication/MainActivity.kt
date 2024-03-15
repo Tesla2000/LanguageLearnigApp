@@ -18,7 +18,6 @@ import okhttp3.RequestBody
 import okhttp3.Response
 import java.io.IOException
 import java.util.Locale
-import kotlin.random.Random
 
 
 class MainActivity : AppCompatActivity() {
@@ -28,12 +27,13 @@ class MainActivity : AppCompatActivity() {
     private var askingSpeechInput = false
     private val speechRate = 0.5f
     private val buffer: ArrayList<List<String>> = arrayListOf()
-    private val login = "login"
+    private lateinit var username: String
     private val bufferSize: Int = 2
 //    private val url = "http://192.168.42.109:5000/"
         private val url = "https://tesla2000.pythonanywhere.com/"
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        username = intent.getStringExtra("username")!!
         getInitialQuestions()
     }
 
@@ -107,7 +107,7 @@ class MainActivity : AppCompatActivity() {
     private fun postAnswer(question: String, answer: String, userAnswer: String) {
         Log.i("API", "POSTING\nquestion $question\nanswer $userAnswer")
 
-        val json = "$login;$question;$userAnswer".trimIndent()
+        val json = "$username;$question;$userAnswer".trimIndent()
 
         val requestBody = RequestBody.create("application/json".toMediaTypeOrNull(), json)
 
@@ -138,7 +138,7 @@ class MainActivity : AppCompatActivity() {
 
 
         val request = Request.Builder()
-            .url("$url$login")
+            .url("$url$username")
             .get()
             .build()
 
