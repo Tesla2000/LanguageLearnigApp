@@ -15,9 +15,7 @@
         android:theme="@style/Theme.MyApplication"
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
-        <activity android:name=".MainActivity"
-            android:exported="true">
-        </activity>
+        <activity android:name="com.example.myapplication.MainActivity" />
         <activity android:name="com.example.loginexample.LoginActivity"
             android:exported="true">
             <intent-filter>

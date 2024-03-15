@@ -7,6 +7,8 @@ import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
 import android.util.Log
+import android.widget.Button
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import okhttp3.Call
@@ -28,12 +30,23 @@ class MainActivity : AppCompatActivity() {
     private val speechRate = 0.5f
     private val buffer: ArrayList<List<String>> = arrayListOf()
     private lateinit var username: String
-    private val bufferSize: Int = 2
-//    private val url = "http://192.168.42.109:5000/"
-        private val url = "https://tesla2000.pythonanywhere.com/"
+    private val bufferSize: Int = 1
+    private val maxRepetitions: Int = 2
+    private var repetitions: Int = 0
+
+    //    private val url = "http://192.168.42.109:5000/"
+    private val url = "https://tesla2000.pythonanywhere.com/"
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
         username = intent.getStringExtra("username")!!
+        val resetButton: Button = findViewById(R.id.resetBtn)
+        resetButton.setOnClickListener {
+            val intent = Intent(this, MainActivity::class.java)
+            intent.putExtra("username", username)
+            startActivity(intent)
+            finish()
+        }
         getInitialQuestions()
     }
 
@@ -58,7 +71,6 @@ class MainActivity : AppCompatActivity() {
 
         if (requestCode == RQ_SPEECH_REC && resultCode == Activity.RESULT_OK) {
             val result = data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
-
             userAnswer = result?.get(0).toString()
             askingSpeechInput = false
         }
@@ -96,8 +108,10 @@ class MainActivity : AppCompatActivity() {
             userAnswer = ""
             val questionAnswerPair = buffer.removeFirst()
             buffer.add(questionAnswerPair)
+            repetitions++
             sayCorrectAnswer(questionAnswerPair[1])
         } else {
+            repetitions = 0
             buffer.removeFirst()
             buffer.add(responseString.split(';'))
             confirmAnswer()
@@ -176,7 +190,12 @@ class MainActivity : AppCompatActivity() {
             }
         }
         tts.setOnUtteranceCompletedListener { utteranceId ->
-            testQuestionAnswer()
+            if (repetitions > maxRepetitions) {
+                repetitions = 0
+                buffer.removeFirst()
+                getInitialQuestions()
+            }
+            else testQuestionAnswer()
         }
     }
 
