@@ -22,7 +22,7 @@ import java.io.IOException
 import java.util.Locale
 
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : BaseClass() {
     private val RQ_SPEECH_REC = 102
     private lateinit var tts: TextToSpeech
     private var userAnswer: String = ""
@@ -30,22 +30,24 @@ class MainActivity : AppCompatActivity() {
     private val speechRate = 0.5f
     private val buffer: ArrayList<List<String>> = arrayListOf()
     private lateinit var username: String
+    private lateinit var token: String
     private val bufferSize: Int = 1
     private val maxRepetitions: Int = 2
     private var repetitions: Int = 0
-
-    //    private val url = "http://192.168.42.109:5000/"
-    private val url = "https://tesla2000.pythonanywhere.com/"
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         username = intent.getStringExtra("username")!!
+        token = intent.getStringExtra("token")!!
         val resetButton: Button = findViewById(R.id.resetBtn)
         resetButton.setOnClickListener {
+            resetButton.isEnabled = false
             val intent = Intent(this, MainActivity::class.java)
             intent.putExtra("username", username)
+            intent.putExtra("token", token)
             startActivity(intent)
             finish()
+            resetButton.isEnabled = true
         }
         getInitialQuestions()
     }
@@ -127,6 +129,7 @@ class MainActivity : AppCompatActivity() {
 
         val request = Request.Builder()
             .url(url)
+            .addHeader("Authorization", "Bearer $token")
             .post(requestBody)
             .build()
 
@@ -153,6 +156,7 @@ class MainActivity : AppCompatActivity() {
 
         val request = Request.Builder()
             .url("$url$username")
+            .addHeader("Authorization", "Bearer $token")
             .get()
             .build()
 
