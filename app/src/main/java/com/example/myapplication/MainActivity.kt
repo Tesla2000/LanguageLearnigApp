@@ -220,7 +220,10 @@ class MainActivity : BaseClass() {
     private fun sayCorrectAnswer(answer: String) {
         tts = TextToSpeech(applicationContext) {
             if (it == TextToSpeech.SUCCESS) {
-                tts.language = Locale.GERMAN
+                if (language == "en_de")
+                    tts.language = Locale.GERMAN
+                if (language == "pl_es")
+                    tts.language = Locale("es", "ES")
                 tts.setSpeechRate(speechRate)
                 val params = HashMap<String, String>()
                 params[TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID] = "utteranceId"
