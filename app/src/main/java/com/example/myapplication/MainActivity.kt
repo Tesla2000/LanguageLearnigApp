@@ -40,6 +40,7 @@ class MainActivity : BaseClass() {
     private val bufferSize: Int = 1
     private val maxRepetitions: Int = 2
     private var repetitions: Int = 0
+    private var reset: Boolean = true
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -54,24 +55,28 @@ class MainActivity : BaseClass() {
             val intent = Intent(this, MainActivity::class.java)
             intent.putExtra("username", username)
             intent.putExtra("token", token)
+            intent.putExtra("language", language)
             startActivity(intent)
             finish()
             resetButton.isEnabled = true
         }
         spinner = findViewById(R.id.optionSpinner)
+        val options = arrayOf("pl_es", "en_de")
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, options)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinner.adapter = adapter
         spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                language = parent?.getItemAtPosition(position) as String
+                if (!reset) {
+                    language = parent?.getItemAtPosition(position) as String
+                    Log.i("Spinner", language!!)
+                }
+                reset = false
             }
-
             override fun onNothingSelected(parent: AdapterView<*>?) {
                 // Do nothing
             }
         }
-        val options = arrayOf("en_de", "pl_es")
-        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, options)
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        spinner.adapter = adapter
         getInitialQuestions()
     }
 
@@ -86,7 +91,7 @@ class MainActivity : BaseClass() {
             )
             if (language == "en_de")
                 i.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.GERMANY.toString())
-            else if (language == "pl_es")
+            if (language == "pl_es")
                 i.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale("es", "ES").toString())
             i.putExtra(RecognizerIntent.EXTRA_PROMPT, "Say something")
             startActivityForResult(i, RQ_SPEECH_REC)
@@ -111,7 +116,7 @@ class MainActivity : BaseClass() {
             if (it == TextToSpeech.SUCCESS) {
                 if (language == "en_de")
                     tts.language = Locale.US
-                else if (language == "pl_es")
+                if (language == "pl_es")
                     tts.language = Locale("pl", "PL")
                 tts.setSpeechRate(speechRate)
                 val params = HashMap<String, String>()
