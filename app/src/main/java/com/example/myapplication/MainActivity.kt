@@ -7,7 +7,11 @@ import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
 import android.util.Log
+import android.view.View
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
 import android.widget.Button
+import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -31,6 +35,8 @@ class MainActivity : BaseClass() {
     private val buffer: ArrayList<List<String>> = arrayListOf()
     private lateinit var username: String
     private lateinit var token: String
+    private lateinit var spinner: Spinner
+    private var language: String? = null
     private val bufferSize: Int = 1
     private val maxRepetitions: Int = 2
     private var repetitions: Int = 0
@@ -39,6 +45,9 @@ class MainActivity : BaseClass() {
         setContentView(R.layout.activity_main)
         username = intent.getStringExtra("username")!!
         token = intent.getStringExtra("token")!!
+        language = intent.getStringExtra("language")
+        if (language == null)
+            language = "pl_es"
         val resetButton: Button = findViewById(R.id.resetBtn)
         resetButton.setOnClickListener {
             resetButton.isEnabled = false
@@ -49,6 +58,20 @@ class MainActivity : BaseClass() {
             finish()
             resetButton.isEnabled = true
         }
+        spinner = findViewById(R.id.optionSpinner)
+        spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                language = parent?.getItemAtPosition(position) as String
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>?) {
+                // Do nothing
+            }
+        }
+        val options = arrayOf("en_de", "pl_es")
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, options)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinner.adapter = adapter
         getInitialQuestions()
     }
 
@@ -61,7 +84,10 @@ class MainActivity : BaseClass() {
                 RecognizerIntent.EXTRA_LANGUAGE_MODEL,
                 RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
             )
-            i.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.GERMANY.toString())
+            if (language == "en_de")
+                i.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.GERMANY.toString())
+            else if (language == "pl_es")
+                i.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale("es", "ES").toString())
             i.putExtra(RecognizerIntent.EXTRA_PROMPT, "Say something")
             startActivityForResult(i, RQ_SPEECH_REC)
         }
@@ -83,7 +109,10 @@ class MainActivity : BaseClass() {
         val answer = buffer[0][1]
         tts = TextToSpeech(applicationContext) {
             if (it == TextToSpeech.SUCCESS) {
-                tts.language = Locale.US
+                if (language == "en_de")
+                    tts.language = Locale.US
+                else if (language == "pl_es")
+                    tts.language = Locale("pl", "PL")
                 tts.setSpeechRate(speechRate)
                 val params = HashMap<String, String>()
                 params[TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID] = "utteranceId"
@@ -128,7 +157,7 @@ class MainActivity : BaseClass() {
         val requestBody = RequestBody.create("application/json".toMediaTypeOrNull(), json)
 
         val request = Request.Builder()
-            .url(url)
+            .url("$url$language")
             .addHeader("Authorization", "Bearer $token")
             .post(requestBody)
             .build()
@@ -155,7 +184,7 @@ class MainActivity : BaseClass() {
 
 
         val request = Request.Builder()
-            .url("$url$username")
+            .url("$url$username/$language")
             .addHeader("Authorization", "Bearer $token")
             .get()
             .build()
