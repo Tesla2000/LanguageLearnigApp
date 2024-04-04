@@ -48,7 +48,7 @@ class MainActivity : BaseClass() {
         token = intent.getStringExtra("token")!!
         language = intent.getStringExtra("language")
         if (language == null)
-            language = "pl_es"
+            language = "pl_en"
         val resetButton: Button = findViewById(R.id.resetBtn)
         resetButton.setOnClickListener {
             resetButton.isEnabled = false
@@ -61,7 +61,7 @@ class MainActivity : BaseClass() {
             resetButton.isEnabled = true
         }
         spinner = findViewById(R.id.optionSpinner)
-        val options = arrayOf("pl_es", "en_de")
+        val options = arrayOf("pl_en", "pl_es", "pl_pt", "en_de")
         val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, options)
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spinner.adapter = adapter
@@ -89,10 +89,7 @@ class MainActivity : BaseClass() {
                 RecognizerIntent.EXTRA_LANGUAGE_MODEL,
                 RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
             )
-            if (language == "en_de")
-                i.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.GERMANY.toString())
-            if (language == "pl_es")
-                i.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale("es", "ES").toString())
+            i.putExtra(RecognizerIntent.EXTRA_LANGUAGE, getLanguage().toString())
             i.putExtra(RecognizerIntent.EXTRA_PROMPT, "Say something")
             startActivityForResult(i, RQ_SPEECH_REC)
         }
@@ -109,6 +106,18 @@ class MainActivity : BaseClass() {
         }
     }
 
+    private fun getLanguage(): Locale {
+        if (language == "en_de")
+            return Locale.GERMANY
+        if (language == "pl_en")
+            return Locale.ENGLISH
+        if (language == "pl_pt")
+            return Locale("pt", "PT")
+        if (language == "pl_es")
+            return Locale("es", "ES")
+        throw Exception("Wrong language!")
+    }
+
     private fun testQuestionAnswer() {
         val question = buffer[0][0]
         val answer = buffer[0][1]
@@ -116,7 +125,7 @@ class MainActivity : BaseClass() {
             if (it == TextToSpeech.SUCCESS) {
                 if (language == "en_de")
                     tts.language = Locale.US
-                if (language == "pl_es")
+                if (language!!.startsWith("pl"))
                     tts.language = Locale("pl", "PL")
                 tts.setSpeechRate(speechRate)
                 val params = HashMap<String, String>()
@@ -220,10 +229,7 @@ class MainActivity : BaseClass() {
     private fun sayCorrectAnswer(answer: String) {
         tts = TextToSpeech(applicationContext) {
             if (it == TextToSpeech.SUCCESS) {
-                if (language == "en_de")
-                    tts.language = Locale.GERMAN
-                if (language == "pl_es")
-                    tts.language = Locale("es", "ES")
+                tts.language = getLanguage()
                 tts.setSpeechRate(speechRate)
                 val params = HashMap<String, String>()
                 params[TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID] = "utteranceId"
