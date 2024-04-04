@@ -36,14 +36,15 @@ class MainActivity : BaseClass() {
     private lateinit var username: String
     private lateinit var token: String
     private lateinit var spinner: Spinner
+    private var reset: Boolean = true
     private var language: String? = null
     private val bufferSize: Int = 1
     private val maxRepetitions: Int = 2
     private var repetitions: Int = 0
-    private var reset: Boolean = true
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        reset = true
         username = intent.getStringExtra("username")!!
         token = intent.getStringExtra("token")!!
         language = intent.getStringExtra("language")
