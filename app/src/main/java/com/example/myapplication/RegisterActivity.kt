@@ -22,17 +22,15 @@ class RegisterActivity : BaseClass() {
         setContentView(R.layout.activity_register)
 
         val nameEditText = findViewById<EditText>(R.id.registerName)
-        val emailEditText = findViewById<EditText>(R.id.registerEmail)
         val passwordEditText = findViewById<EditText>(R.id.registerPassword)
         val registerButton = findViewById<Button>(R.id.doRegisterButton)
 
         registerButton.setOnClickListener {
             registerButton.isEnabled = false
             val name = nameEditText.text.toString().trim()
-            val email = emailEditText.text.toString().trim()
             val password = passwordEditText.text.toString().trim()
 
-            if (name.isEmpty() || email.isEmpty() || password.isEmpty()) {
+            if (name.isEmpty() || password.isEmpty()) {
                 Toast.makeText(this, "Please fill in all fields", Toast.LENGTH_LONG).show()
             } else {
                 postAnswer(name, password)
