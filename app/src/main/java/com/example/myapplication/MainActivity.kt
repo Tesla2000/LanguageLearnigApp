@@ -62,7 +62,7 @@ class MainActivity : BaseClass() {
             resetButton.isEnabled = true
         }
         spinner = findViewById(R.id.optionSpinner)
-        val options = arrayOf("pl_en", "pl_es", "pl_pt", "en_de")
+        val options = arrayOf("pl_en", "pl_es", "pl_pt", "en_de", "pl_en_c1")
         val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, options)
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spinner.adapter = adapter
@@ -108,13 +108,13 @@ class MainActivity : BaseClass() {
     }
 
     private fun getLanguage(): Locale {
-        if (language == "en_de")
+        if (language!!.split('_')[1] == "de")
             return Locale.GERMANY
-        if (language == "pl_en")
+        if (language!!.split('_')[1] == "en")
             return Locale.ENGLISH
-        if (language == "pl_pt")
+        if (language!!.split('_')[1] == "pt")
             return Locale("pt", "PT")
-        if (language == "pl_es")
+        if (language!!.split('_')[1] == "es")
             return Locale("es", "ES")
         throw Exception("Wrong language!")
     }
@@ -255,6 +255,7 @@ class MainActivity : BaseClass() {
                 val params = HashMap<String, String>()
                 params[TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID] = "utteranceId"
                 tts.speak("You are right!", TextToSpeech.QUEUE_ADD, params)
+                Thread.sleep(1_000)
             }
         }
         tts.setOnUtteranceCompletedListener { utteranceId ->
