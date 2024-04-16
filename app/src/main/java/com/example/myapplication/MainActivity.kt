@@ -37,6 +37,7 @@ class MainActivity : BaseClass() {
     private lateinit var token: String
     private lateinit var spinner: Spinner
     private var reset: Boolean = true
+    private var speaking: Boolean = false
     private var language: String? = null
     private val bufferSize: Int = 1
     private val maxRepetitions: Int = 2
@@ -137,11 +138,12 @@ class MainActivity : BaseClass() {
 
         tts.setOnUtteranceCompletedListener {
             do {
-                if (!askingSpeechInput) {
+                if (!askingSpeechInput && !speaking) {
                     askingSpeechInput = true
                     askSpeechInput()
                 }
             } while (userAnswer == "")
+            speaking = true
             Log.i("USER", userAnswer)
             Log.i("USER", answer)
             postAnswer(question, answer, userAnswer)
@@ -162,6 +164,7 @@ class MainActivity : BaseClass() {
             buffer.add(responseString.split(';'))
             confirmAnswer()
         }
+        speaking = false
     }
 
     private fun postAnswer(question: String, answer: String, userAnswer: String) {
@@ -255,7 +258,6 @@ class MainActivity : BaseClass() {
                 val params = HashMap<String, String>()
                 params[TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID] = "utteranceId"
                 tts.speak("You are right!", TextToSpeech.QUEUE_ADD, params)
-                Thread.sleep(1_000)
             }
         }
         tts.setOnUtteranceCompletedListener { utteranceId ->
