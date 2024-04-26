@@ -5,6 +5,8 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.Button
 import android.widget.RelativeLayout
+import android.widget.TableLayout
+import android.widget.TableRow
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.OkHttpClient
@@ -22,24 +24,32 @@ class MainActivity : LoggedClass() {
 
     private fun createButtons(buttonNames: List<String>){
 
-        val relativeLayout = findViewById<RelativeLayout>(R.id.relativeLayout)
-        val buttons: ArrayList<Button> = arrayListOf()
+        val tableLayout = findViewById<TableLayout>(R.id.tableLayout)
+
         for (i in buttonNames.indices) {
+            val tableRow = TableRow(this)
             val button = Button(this)
             button.text = buttonNames[i]
             button.textSize = 24f
-            button.layoutParams = RelativeLayout.LayoutParams(
-                RelativeLayout.LayoutParams.WRAP_CONTENT,
-                RelativeLayout.LayoutParams.WRAP_CONTENT
+
+            val rowParams = TableRow.LayoutParams(
+                TableRow.LayoutParams.WRAP_CONTENT,
+                TableRow.LayoutParams.WRAP_CONTENT
             )
-            button.id = i + 1
-            relativeLayout.addView(button)
-            buttons.add(button)
-        }
-        for (button in buttons) {
+
+            button.layoutParams = rowParams
+            tableRow.addView(button)
+            tableLayout.addView(tableRow)
+
             button.setOnClickListener {
-                for (b in buttons)
-                    b.isEnabled = false
+                for (row in 0 until tableLayout.childCount) {
+                    val currentRow = tableLayout.getChildAt(row) as TableRow
+                    for (index in 0 until currentRow.childCount) {
+                        val currentButton = currentRow.getChildAt(index) as Button
+                        currentButton.isEnabled = false
+                    }
+                }
+
                 val intent = Intent(this, LearnActivity::class.java)
                 intent.putExtra("username", username)
                 intent.putExtra("token", token)
