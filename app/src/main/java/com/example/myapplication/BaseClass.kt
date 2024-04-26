@@ -11,8 +11,8 @@ import okhttp3.Response
 import java.io.IOException
 
 open class BaseClass : AppCompatActivity() {
-    protected val url = "http://192.168.0.8:5000/"
-//    protected val url = "https://tesla2000.pythonanywhere.com/"
+//    protected val url = "http://192.168.0.8:5000/"
+    protected val url = "https://tesla2000.pythonanywhere.com/"
 
 
     protected fun getLanguages(token: String, username: String) {
