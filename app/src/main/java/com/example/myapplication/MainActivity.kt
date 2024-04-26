@@ -2,17 +2,9 @@ package com.example.myapplication
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.widget.Button
-import android.widget.RelativeLayout
 import android.widget.TableLayout
 import android.widget.TableRow
-import okhttp3.Call
-import okhttp3.Callback
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.Response
-import java.io.IOException
 
 
 class MainActivity : LoggedClass() {
