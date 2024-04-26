@@ -85,10 +85,26 @@ class LearnActivity : LoggedClass() {
     }
 
     private fun getToLanguage(): Locale {
+        if (language!!.split('_')[1] == "de")
+            return Locale.GERMANY
+        if (language!!.split('_')[1] == "en")
+            return Locale.ENGLISH
+        if (language!!.split('_')[1] == "pt")
+            return Locale("pt", "PT")
+        if (language!!.split('_')[1] == "es")
+            return Locale("es", "ES")
         return Locale(language!!.split('_')[1], language!!.split('_')[1].uppercase())
     }
 
     private fun getFromLanguage(): Locale {
+        if (language!!.split('_')[0] == "de")
+            return Locale.GERMANY
+        if (language!!.split('_')[0] == "en")
+            return Locale.ENGLISH
+        if (language!!.split('_')[0] == "pt")
+            return Locale("pt", "PT")
+        if (language!!.split('_')[0] == "es")
+            return Locale("es", "ES")
         return Locale(language!!.split('_')[0], language!!.split('_')[0].uppercase())
     }
 
