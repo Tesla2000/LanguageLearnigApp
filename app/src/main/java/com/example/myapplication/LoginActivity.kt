@@ -68,19 +68,14 @@ class LoginActivity : BaseClass() {
             override fun onResponse(call: Call, response: Response) {
                 val responseString = response.body!!.string()
                 Log.i("API", "Succeeded to POST $responseString")
-                if (response.code == 200)
-                    afterPost(responseString, username)
+                if (response.code == 200) {
+                    val token: String =
+                        Regex("token\":\"([^\"]+)").find(responseString)!!.groups[1]!!.value
+                    getLanguages(token, username)
+                }
             }
         }
         )
-    }
-
-    private fun afterPost(responseString: String, username: String) {
-        val intent = Intent(this, MainActivity::class.java)
-        intent.putExtra("username", username)
-        intent.putExtra("token", Regex("token\":\"([^\"]+)").find(responseString)!!.groups[1]!!.value)
-        startActivity(intent)
-        finish()
     }
 
 }
